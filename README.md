@@ -62,15 +62,32 @@ python db_health_check.py --idle-seconds 30
 
 접속값은 `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` 환경변수로 변경할 수 있습니다. 비밀번호는 `DB_PASSWORD`로 전달하며 저장소에 포함하지 않습니다. 프로그램은 로컬 상태 점검용으로 구성했으며 자동 알림·장애 복구 기능은 포함하지 않습니다.
 
+## 실행계획 및 모니터링 검증
 
 ### 인덱스 스캔 제한 실행계획
-![인덱스 스캔 제한](docs/screenshots/plan_before.png)
+
+인덱스 기반 탐색을 제한하여 특정 고객의 주문 조회 시 발생하는 테이블 접근 방식을 확인했습니다.
+
+![인덱스 스캔 제한 실행계획](docs/screenshots/plan_before.png)
+
+**결과:** `orders`에서 Seq Scan, `order_items`에서 Parallel Seq Scan이 발생했습니다. 실행 시간은 40.971ms였으며, 이 실험은 기존 PK 인덱스 사용도 제한하므로 인덱스 생성 전 환경과는 구분했습니다.
 
 ### 인덱스 사용 실행계획
-![인덱스 사용](docs/screenshots/plan_after.png)
+
+고객 검색 및 주문상세 JOIN 조건에 적합한 인덱스를 생성한 뒤, 인덱스 사용이 허용된 상태에서 동일한 조회 쿼리를 실행했습니다.
+
+![인덱스 사용 실행계획](docs/screenshots/plan_after.png)
+
+**결과:** `orders`는 Bitmap Index Scan과 Bitmap Heap Scan, `order_items`는 Index Scan을 사용했습니다. 해당 단회 실행 시간은 4.306ms였으며, 캐시 상태에 따라 반복 측정값과 차이가 발생할 수 있습니다.
 
 ### Python DB 모니터링
-![장기 트랜잭션 탐지](docs/screenshots/health_check.png)
+
+테스트 세션에서 트랜잭션을 열린 채 유지한 뒤, Python 모니터링 프로그램을 실행하여 장기 트랜잭션 감지 기능을 확인했습니다.
+
+![Python DB 모니터링](docs/screenshots/health_check.png)
+
+**결과:** 약 3분간 유지된 `idle in transaction` 세션 1건을 탐지하여 경고 메시지를 출력했습니다. 잠금 대기 세션은 발견되지 않았습니다.
+
 
 ## 성능 측정 결과
 
