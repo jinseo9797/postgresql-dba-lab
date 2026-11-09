@@ -62,6 +62,16 @@ python db_health_check.py --idle-seconds 30
 
 접속값은 `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` 환경변수로 변경할 수 있습니다. 비밀번호는 `DB_PASSWORD`로 전달하며 저장소에 포함하지 않습니다. 프로그램은 로컬 상태 점검용으로 구성했으며 자동 알림·장애 복구 기능은 포함하지 않습니다.
 
+
+### 인덱스 스캔 제한 실행계획
+![인덱스 스캔 제한](docs/screenshots/plan_before.png)
+
+### 인덱스 사용 실행계획
+![인덱스 사용](docs/screenshots/plan_after.png)
+
+### Python DB 모니터링
+![장기 트랜잭션 탐지](docs/screenshots/health_check.png)
+
 ## 성능 측정 결과
 
 | 측정 조건 | 실행 시간 |
