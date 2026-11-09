@@ -23,7 +23,7 @@ WHERE i.product_id = p.product_id
 RETURNING i.product_id, i.quantity;
 
 -- ② 음수 주문 수량 입력으로 CHECK 오류 발생
--- 주문상세가 아닌 기존 주문을 참조
+-- 기존 주문 ID를 참조하여 잘못된 주문상세 입력
 INSERT INTO ecommerce.order_items(order_id, product_id, quantity, unit_price)
 SELECT o.order_id, p.product_id, -1, p.price
 FROM ecommerce.orders o
