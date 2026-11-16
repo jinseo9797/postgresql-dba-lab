@@ -1,6 +1,6 @@
--- STEP 4: 별도 벤치마크 스키마
+-- 성능 테스트 스키마 생성
 CREATE SCHEMA IF NOT EXISTS ecommerce_bench;
--- 고객·상품: PK 및 값 검증
+-- 고객·상품 테이블
 CREATE TABLE IF NOT EXISTS ecommerce_bench.customers (
     customer_id INT PRIMARY KEY,
     customer_name VARCHAR(100) NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS ecommerce_bench.products (
     product_name VARCHAR(100) NOT NULL,
     price NUMERIC(12,2) NOT NULL CHECK (price >= 0)
 );
--- 주문·주문상세: FK 참조 무결성
+-- 주문·주문상세 테이블
 CREATE TABLE IF NOT EXISTS ecommerce_bench.orders (
     order_id INT PRIMARY KEY,
     customer_id INT NOT NULL REFERENCES ecommerce_bench.customers(customer_id),
@@ -24,4 +24,4 @@ CREATE TABLE IF NOT EXISTS ecommerce_bench.order_items (
     quantity INT NOT NULL CHECK(quantity > 0),
     unit_price NUMERIC(12,2) NOT NULL CHECK(unit_price >= 0)
 );
--- FK 인덱스는 최적화 실습에서 생성
+-- 인덱스는 별도 실습에서 생성
