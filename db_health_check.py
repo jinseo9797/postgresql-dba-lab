@@ -15,14 +15,14 @@ def main() -> int:
     if args.idle_seconds < 0:
         parser.error("--idle-seconds는 0 이상이어야 합니다.")
 
-    # 비밀번호 환경변수에서 조회
+    # 비밀번호 조회
     password = os.getenv("DB_PASSWORD")
     if not password:
         print("[ERROR] DB_PASSWORD 환경변수를 먼저 설정하세요.", file=sys.stderr)
         return 2
 
     try:
-        # 점검 후 DB 연결 자동 정리
+        # DB 연결
         with psycopg.connect(
             host=os.getenv("DB_HOST", "127.0.0.1"),
             port=int(os.getenv("DB_PORT", "5433")),
@@ -34,7 +34,7 @@ def main() -> int:
             autocommit=True,
         ) as conn:
             with conn.cursor() as cur:
-                # 세션 상태별 건수 집계
+                # 세션 건수 집계
                 cur.execute("""
                     SELECT count(*) FILTER (WHERE state = 'active') AS active,
                            count(*) FILTER (WHERE state = 'idle') AS idle,
@@ -47,7 +47,7 @@ def main() -> int:
                 print("=== PostgreSQL Health Check ===")
                 print(f"Active: {active} | Idle: {idle} | Idle in transaction: {idle_in_tx} | Blocked: {blocked}")
 
-                # 장기 idle in transaction 세션 조회
+                # 장기 트랜잭션 조회
                 cur.execute("""
                     SELECT pid, usename, now()-xact_start AS tx_age,
                            wait_event_type, wait_event
@@ -66,7 +66,7 @@ def main() -> int:
                 else:
                     print(f"[OK] {args.idle_seconds}초 초과 idle in transaction 없음")
 
-                # 잠금 대기 세션 확인
+                # 잠금 대기 조회
                 cur.execute("""
                     SELECT pid, usename, pg_blocking_pids(pid)
                     FROM pg_stat_activity
@@ -82,7 +82,7 @@ def main() -> int:
                 else:
                     print("[OK] Lock 대기 세션 없음")
         return 0
-    # DB 접속 오류 처리
+    # 접속 오류 처리
     except (psycopg.Error, ValueError) as exc:
         print(f"[ERROR] DB 상태 확인 실패: {exc}", file=sys.stderr)
         return 1
