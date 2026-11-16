@@ -1,17 +1,17 @@
--- STEP 3b: 주문상세 오류 발생 시 트랜잭션 취소
--- 02_seed_data.sql 실행 후 사용
--- pgAdmin에서 아래 ①, ②, ③을 각각 선택하여 실행
--- ②에서 SQLSTATE 23514 발생이 정상
--- 오류 후 ③ ROLLBACK 반드시 실행
+-- 주문 오류 시 ROLLBACK 검증
+-- 예제 데이터 등록 후 실행
+-- ①~③ 순서대로 개별 실행
+-- ② 예상 오류: 23514
+-- 오류 후 ROLLBACK 필수
 
--- 현재 재고와 주문상세 수 확인
+-- 변경 전 데이터 조회
 SELECT i.quantity AS keyboard_stock
 FROM ecommerce.inventory i
 JOIN ecommerce.products p ON p.product_id = i.product_id
 WHERE p.product_name = 'Keyboard';
 SELECT COUNT(*) AS order_item_count FROM ecommerce.order_items;
 
--- ① 트랜잭션 시작 및 재고 차감
+-- ① 재고 차감
 BEGIN;
 UPDATE ecommerce.inventory i
 SET quantity = i.quantity - 1,
@@ -22,8 +22,8 @@ WHERE i.product_id = p.product_id
   AND i.quantity >= 1
 RETURNING i.product_id, i.quantity;
 
--- ② 음수 주문 수량 입력으로 CHECK 오류 발생
--- 기존 주문 ID를 참조하여 잘못된 주문상세 입력
+-- ② 음수 수량 오류 유도
+-- 기존 주문 ID 사용
 INSERT INTO ecommerce.order_items(order_id, product_id, quantity, unit_price)
 SELECT o.order_id, p.product_id, -1, p.price
 FROM ecommerce.orders o
@@ -32,10 +32,10 @@ WHERE p.product_name = 'Keyboard'
 ORDER BY o.order_id DESC, p.product_id
 LIMIT 1;
 
--- ③ 실패한 트랜잭션 정리
+-- ③ ROLLBACK
 ROLLBACK;
 
--- 재고 복구 및 잘못된 주문상세 미저장 확인
+-- 변경 취소 결과 확인
 SELECT i.quantity AS keyboard_stock_after_rollback
 FROM ecommerce.inventory i
 JOIN ecommerce.products p ON p.product_id = i.product_id
